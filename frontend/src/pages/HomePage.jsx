@@ -1,3 +1,5 @@
+import SystemStatus from "../components/SystemStatus.jsx";
+
 function HomePage() {
   return (
     <section>
@@ -10,16 +12,14 @@ function HomePage() {
         <article className="card">
           <h2>O que já foi preparado</h2>
           <ul>
-            <li>Estrutura do frontend</li>
-            <li>Rotas iniciais</li>
-            <li>Layout responsivo</li>
+            <li>Frontend com React e Vite</li>
+            <li>Rotas e layout responsivo</li>
+            <li>API Express com rota de verificação</li>
+            <li>Teste automatizado da rota health</li>
           </ul>
         </article>
 
-        <article className="card">
-          <h2>Integração com a API</h2>
-          <p>A conexão com o backend será adicionada no próximo bloco.</p>
-        </article>
+        <SystemStatus />
       </div>
     </section>
   );
