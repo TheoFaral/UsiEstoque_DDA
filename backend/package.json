@@ -8,17 +8,23 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "test": "jest --runInBand",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "db:check": "node src/database/checkConnection.js",
+    "seed:admin": "node src/database/createAdmin.js"
   },
   "engines": {
     "node": ">=24 <25"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^5.0.0",
     "helmet": "^8.0.0",
-    "morgan": "^1.10.0"
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.24.5",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "jest": "^30.0.0",
