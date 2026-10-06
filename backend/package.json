@@ -10,7 +10,8 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "db:check": "node src/database/checkConnection.js",
-    "seed:admin": "node src/database/createAdmin.js"
+    "seed:admin": "node src/database/createAdmin.js",
+    "seed:dev": "node src/database/seedDevelopment.js"
   },
   "engines": {
     "node": ">=24 <25"
