@@ -181,6 +181,12 @@ function MovementsPage() {
           </thead>
 
           <tbody>
+            {movimentacoes.length === 0 && (
+              <tr>
+                <td colSpan="8">Nenhuma movimentação registrada.</td>
+              </tr>
+            )}
+
             {movimentacoes.map((mov) => (
               <tr key={mov.id}>
                 <td>{new Date(mov.criadoEm).toLocaleString("pt-BR")}</td>
