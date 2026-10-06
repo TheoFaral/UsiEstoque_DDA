@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import ItemsPage from "../pages/ItemsPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
+import MovementsPage from "../pages/MovementsPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 
@@ -17,6 +18,8 @@ function AppRoutes() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/itens" element={<ItemsPage />} />
+
+          <Route path="/movimentacoes" element={<MovementsPage />} />
         </Route>
 
         <Route path="/inicio" element={<Navigate to="/" replace />} />
