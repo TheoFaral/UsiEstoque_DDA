@@ -20,6 +20,8 @@ function MainLayout() {
         <nav className="nav-actions">
           {usuario && <Link to="/itens">Itens</Link>}
 
+          {usuario && <Link to="/movimentacoes">Movimentações</Link>}
+
           {usuario ? (
             <button className="link-button" onClick={sair}>
               Sair
