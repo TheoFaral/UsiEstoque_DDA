@@ -1,4 +1,7 @@
-const { listarAlertasEstoque } = require("../services/estoqueService");
+const {
+  listarAlertasEstoque,
+  obterIndicadoresEstoque,
+} = require("../services/estoqueService");
 
 async function alertas(_req, res, next) {
   try {
@@ -9,4 +12,13 @@ async function alertas(_req, res, next) {
   }
 }
 
-module.exports = { alertas };
+async function indicadores(_req, res, next) {
+  try {
+    const dados = await obterIndicadoresEstoque();
+    return res.status(200).json(dados);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { alertas, indicadores };

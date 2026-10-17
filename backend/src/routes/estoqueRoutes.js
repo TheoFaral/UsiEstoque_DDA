@@ -6,5 +6,6 @@ const router = Router();
 
 router.use(autenticarToken);
 router.get("/alertas", controller.alertas);
+router.get("/indicadores", controller.indicadores);
 
 module.exports = router;
