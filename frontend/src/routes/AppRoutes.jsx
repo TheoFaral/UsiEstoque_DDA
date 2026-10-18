@@ -5,6 +5,7 @@ import HomePage from "../pages/HomePage.jsx";
 import ItemsPage from "../pages/ItemsPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
 import MovementsPage from "../pages/MovementsPage.jsx";
+import StockDashboardPage from "../pages/StockDashboardPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 
@@ -13,17 +14,15 @@ function AppRoutes() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
-
         <Route path="/login" element={<LoginPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/itens" element={<ItemsPage />} />
-
           <Route path="/movimentacoes" element={<MovementsPage />} />
+          <Route path="/painel" element={<StockDashboardPage />} />
         </Route>
 
         <Route path="/inicio" element={<Navigate to="/" replace />} />
-
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

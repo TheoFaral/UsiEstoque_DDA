@@ -1,0 +1,46 @@
+.estado-vazio {
+  padding: 1rem;
+  border: 1px solid #3c4653;
+  border-radius: 8px;
+  background: #1d2228;
+}
+
+.indicadores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.indicador-card {
+  padding: 1rem;
+  border: 1px solid #3c4653;
+  border-radius: 8px;
+  background: #1d2228;
+}
+
+.indicador-card span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #b9c2cc;
+}
+
+.indicador-card strong {
+  font-size: 1.7rem;
+}
+
+@media (max-width: 700px) {
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .indicadores-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .indicadores-grid {
+    grid-template-columns: 1fr;
+  }
+}
