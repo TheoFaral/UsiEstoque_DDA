@@ -1,0 +1,12 @@
+.estado-vazio {
+  padding: 1rem;
+  border: 1px solid #3c4653;
+  border-radius: 8px;
+  background: #1d2228;
+}
+
+@media (max-width: 700px) {
+  .table-wrap {
+    overflow-x: auto;
+  }
+}
