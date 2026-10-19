@@ -1,14 +1,17 @@
 jest.mock("../../src/config/database", () => ({ query: jest.fn() }));
 jest.mock("../../src/models", () => ({
-  Movimentacao: { findOne: jest.fn() },
+  Movimentacao: { findOne: jest.fn(), findAll: jest.fn() },
   Item: {},
   Fornecedor: {},
   Usuario: {},
 }));
 
+const { Op } = require("sequelize");
 const sequelize = require("../../src/config/database");
 const { Movimentacao } = require("../../src/models");
 const {
+  construirFiltroHistorico,
+  listarMovimentacoes,
   registrarMovimentacao,
 } = require("../../src/services/movimentacaoService");
 
@@ -44,11 +47,47 @@ describe("movimentacaoService", () => {
         }),
       }),
     );
-    expect(Movimentacao.findOne).toHaveBeenCalledWith(
+    expect(resultado).toEqual(movimento);
+  });
+
+  test("monta filtros por item, tipo e período", () => {
+    const where = construirFiltroHistorico({
+      itemId: "4",
+      tipo: "saida",
+      dataInicio: "2026-10-01",
+      dataFim: "2026-10-31",
+    });
+
+    expect(where.itemId).toBe(4);
+    expect(where.tipo).toBe("saida");
+    expect(where.criadoEm[Op.gte]).toEqual(new Date("2026-10-01T00:00:00"));
+    expect(where.criadoEm[Op.lte]).toEqual(new Date("2026-10-31T23:59:59.999"));
+  });
+
+  test("recusa período invertido", () => {
+    expect(() =>
+      construirFiltroHistorico({
+        dataInicio: "2026-10-31",
+        dataFim: "2026-10-01",
+      }),
+    ).toThrow("A data final deve ser igual ou posterior à data inicial.");
+  });
+
+  test("lista movimentações com os filtros construídos", async () => {
+    Movimentacao.findAll.mockResolvedValue([{ id: 1, tipo: "saida" }]);
+
+    const resultado = await listarMovimentacoes({ tipo: "saida" });
+
+    expect(Movimentacao.findAll).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { chaveRequisicao: movimento.chaveRequisicao },
+        where: { tipo: "saida" },
+        order: [
+          ["criadoEm", "DESC"],
+          ["id", "DESC"],
+        ],
+        limit: 200,
       }),
     );
-    expect(resultado).toEqual(movimento);
+    expect(resultado).toEqual([{ id: 1, tipo: "saida" }]);
   });
 });
