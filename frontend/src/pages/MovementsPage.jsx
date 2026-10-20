@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../api/api.js";
 
 const formInicial = {
@@ -8,14 +8,16 @@ const formInicial = {
   fornecedorId: "",
 };
 
-function MovementsPage() {
-  const [catalogos, setCatalogos] = useState({
-    itens: [],
-    fornecedores: [],
-  });
+function formatarData(valor) {
+  if (!valor) return "-";
+  return new Date(valor).toLocaleString("pt-BR");
+}
 
+function MovementsPage() {
+  const [catalogos, setCatalogos] = useState({ itens: [], fornecedores: [] });
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [form, setForm] = useState(formInicial);
+  const [buscaItem, setBuscaItem] = useState("");
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -29,7 +31,6 @@ function MovementsPage() {
           api.get("/movimentacoes/catalogos"),
           api.get("/movimentacoes"),
         ]);
-
         if (ativo) {
           setCatalogos(catalogosResp.data);
           setMovimentacoes(movimentosResp.data);
@@ -45,25 +46,36 @@ function MovementsPage() {
     }
 
     carregarInicial();
-
     return () => {
       ativo = false;
     };
   }, []);
+
+  const itensFiltrados = useMemo(() => {
+    const termo = buscaItem.trim().toLowerCase();
+    if (!termo) return catalogos.itens;
+    return catalogos.itens.filter(
+      (item) =>
+        item.codigo.toLowerCase().includes(termo) ||
+        item.descricao.toLowerCase().includes(termo),
+    );
+  }, [buscaItem, catalogos.itens]);
+
+  const itemSelecionado = catalogos.itens.find(
+    (item) => item.id === Number(form.itemId),
+  );
 
   async function recarregar() {
     const [catalogosResp, movimentosResp] = await Promise.all([
       api.get("/movimentacoes/catalogos"),
       api.get("/movimentacoes"),
     ]);
-
     setCatalogos(catalogosResp.data);
     setMovimentacoes(movimentosResp.data);
   }
 
   function alterar(event) {
     const { name, value } = event.target;
-
     setForm((atual) => ({
       ...atual,
       [name]: value,
@@ -71,9 +83,15 @@ function MovementsPage() {
     }));
   }
 
+  function cancelar() {
+    setForm(formInicial);
+    setBuscaItem("");
+    setErro("");
+    setMensagem("");
+  }
+
   async function registrar(event) {
     event.preventDefault();
-
     setErro("");
     setMensagem("");
     setSalvando(true);
@@ -85,11 +103,11 @@ function MovementsPage() {
         quantidade: Number(form.quantidade),
         fornecedorId:
           form.tipo === "entrada" ? Number(form.fornecedorId) : null,
+        chaveRequisicao: crypto.randomUUID(),
       });
-
       setMensagem("Movimentação registrada com sucesso.");
       setForm(formInicial);
-
+      setBuscaItem("");
       await recarregar();
     } catch (error) {
       setErro(
@@ -104,7 +122,6 @@ function MovementsPage() {
   return (
     <section>
       <h1>Movimentações de estoque</h1>
-
       <p className="subtitulo">
         Registre entradas e saídas e acompanhe o histórico.
       </p>
@@ -117,10 +134,16 @@ function MovementsPage() {
           <option value="saida">Saída</option>
         </select>
 
-        <select name="itemId" value={form.itemId} onChange={alterar} required>
-          <option value="">Item</option>
+        <input
+          type="search"
+          placeholder="Buscar item por código ou descrição"
+          value={buscaItem}
+          onChange={(event) => setBuscaItem(event.target.value)}
+        />
 
-          {catalogos.itens.map((item) => (
+        <select name="itemId" value={form.itemId} onChange={alterar} required>
+          <option value="">Selecione um item</option>
+          {itensFiltrados.map((item) => (
             <option key={item.id} value={item.id}>
               {item.codigo} — {item.descricao} — saldo {item.saldoAtual}
             </option>
@@ -145,7 +168,6 @@ function MovementsPage() {
             required
           >
             <option value="">Fornecedor</option>
-
             {catalogos.fornecedores.map((fornecedor) => (
               <option key={fornecedor.id} value={fornecedor.id}>
                 {fornecedor.nome}
@@ -154,15 +176,29 @@ function MovementsPage() {
           </select>
         )}
 
-        <div>
-          <button className="botao" disabled={salvando}>
+        {itemSelecionado && (
+          <p className="movimento-resumo">
+            Saldo atual: <strong>{itemSelecionado.saldoAtual}</strong> | Mínimo:{" "}
+            <strong>{itemSelecionado.estoqueMinimo}</strong>
+          </p>
+        )}
+
+        <div className="acoes-movimento">
+          <button className="botao" type="submit" disabled={salvando}>
             {salvando ? "Registrando..." : "Registrar"}
+          </button>
+          <button
+            className="botao-secundario"
+            type="button"
+            onClick={cancelar}
+            disabled={salvando}
+          >
+            Cancelar
           </button>
         </div>
       </form>
 
       {erro && <p className="mensagem-erro">{erro}</p>}
-
       {mensagem && <p className="mensagem-sucesso">{mensagem}</p>}
 
       <div className="table-wrap">
@@ -179,27 +215,22 @@ function MovementsPage() {
               <th>Usuário</th>
             </tr>
           </thead>
-
           <tbody>
             {movimentacoes.length === 0 && (
               <tr>
                 <td colSpan="8">Nenhuma movimentação registrada.</td>
               </tr>
             )}
-
             {movimentacoes.map((mov) => (
               <tr key={mov.id}>
-                <td>{new Date(mov.criadoEm).toLocaleString("pt-BR")}</td>
-
+                <td>{formatarData(mov.criadoEm)}</td>
                 <td>{mov.item?.codigo}</td>
-
-                <td>{mov.tipo === "entrada" ? "Entrada" : "Saída"}</td>
-
+                <td>{mov.tipo}</td>
                 <td>{mov.quantidade}</td>
                 <td>{mov.saldoAnterior}</td>
                 <td>{mov.saldoPosterior}</td>
-                <td>{mov.fornecedor?.nome || "—"}</td>
-                <td>{mov.usuario?.nome}</td>
+                <td>{mov.fornecedor?.nome || "-"}</td>
+                <td>{mov.usuario?.nome || "-"}</td>
               </tr>
             ))}
           </tbody>

@@ -1,0 +1,33 @@
+.acoes-movimento {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.botao-secundario {
+  border: 1px solid #66717d;
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.botao-secundario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.movimento-resumo {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #3c4653;
+  border-radius: 6px;
+  background: #1d2228;
+}
+
+@media (max-width: 700px) {
+  .acoes-movimento {
+    flex-direction: column;
+  }
+}
