@@ -7,6 +7,7 @@ const formInicial = {
   quantidade: 1,
   fornecedorId: "",
 };
+const filtrosIniciais = { itemId: "", tipo: "", dataInicio: "", dataFim: "" };
 
 function formatarData(valor) {
   if (!valor) return "-";
@@ -18,13 +19,23 @@ function MovementsPage() {
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [form, setForm] = useState(formInicial);
   const [buscaItem, setBuscaItem] = useState("");
+  const [filtros, setFiltros] = useState(filtrosIniciais);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [salvando, setSalvando] = useState(false);
 
+  async function carregarHistorico(filtrosAtuais = filtrosIniciais) {
+    const params = Object.fromEntries(
+      Object.entries(filtrosAtuais).filter(
+        ([, valor]) => String(valor).trim() !== "",
+      ),
+    );
+    const { data } = await api.get("/movimentacoes", { params });
+    setMovimentacoes(data);
+  }
+
   useEffect(() => {
     let ativo = true;
-
     async function carregarInicial() {
       try {
         const [catalogosResp, movimentosResp] = await Promise.all([
@@ -36,15 +47,13 @@ function MovementsPage() {
           setMovimentacoes(movimentosResp.data);
         }
       } catch (error) {
-        if (ativo) {
+        if (ativo)
           setErro(
             error.response?.data?.error ||
               "Não foi possível carregar as movimentações.",
           );
-        }
       }
     }
-
     carregarInicial();
     return () => {
       ativo = false;
@@ -66,12 +75,9 @@ function MovementsPage() {
   );
 
   async function recarregar() {
-    const [catalogosResp, movimentosResp] = await Promise.all([
-      api.get("/movimentacoes/catalogos"),
-      api.get("/movimentacoes"),
-    ]);
+    const catalogosResp = await api.get("/movimentacoes/catalogos");
     setCatalogos(catalogosResp.data);
-    setMovimentacoes(movimentosResp.data);
+    await carregarHistorico(filtros);
   }
 
   function alterar(event) {
@@ -83,6 +89,11 @@ function MovementsPage() {
     }));
   }
 
+  function alterarFiltro(event) {
+    const { name, value } = event.target;
+    setFiltros((atual) => ({ ...atual, [name]: value }));
+  }
+
   function cancelar() {
     setForm(formInicial);
     setBuscaItem("");
@@ -90,12 +101,35 @@ function MovementsPage() {
     setMensagem("");
   }
 
+  async function aplicarFiltros(event) {
+    event.preventDefault();
+    setErro("");
+    try {
+      await carregarHistorico(filtros);
+    } catch (error) {
+      setErro(
+        error.response?.data?.error || "Não foi possível filtrar o histórico.",
+      );
+    }
+  }
+
+  async function limparFiltros() {
+    setFiltros(filtrosIniciais);
+    setErro("");
+    try {
+      await carregarHistorico(filtrosIniciais);
+    } catch (error) {
+      setErro(
+        error.response?.data?.error || "Não foi possível carregar o histórico.",
+      );
+    }
+  }
+
   async function registrar(event) {
     event.preventDefault();
     setErro("");
     setMensagem("");
     setSalvando(true);
-
     try {
       await api.post("/movimentacoes", {
         itemId: Number(form.itemId),
@@ -128,19 +162,16 @@ function MovementsPage() {
 
       <form className="form-grid" onSubmit={registrar}>
         <h2>Nova movimentação</h2>
-
         <select name="tipo" value={form.tipo} onChange={alterar}>
           <option value="entrada">Entrada</option>
           <option value="saida">Saída</option>
         </select>
-
         <input
           type="search"
           placeholder="Buscar item por código ou descrição"
           value={buscaItem}
-          onChange={(event) => setBuscaItem(event.target.value)}
+          onChange={(e) => setBuscaItem(e.target.value)}
         />
-
         <select name="itemId" value={form.itemId} onChange={alterar} required>
           <option value="">Selecione um item</option>
           {itensFiltrados.map((item) => (
@@ -149,7 +180,6 @@ function MovementsPage() {
             </option>
           ))}
         </select>
-
         <input
           name="quantidade"
           type="number"
@@ -159,7 +189,6 @@ function MovementsPage() {
           onChange={alterar}
           required
         />
-
         {form.tipo === "entrada" && (
           <select
             name="fornecedorId"
@@ -168,21 +197,19 @@ function MovementsPage() {
             required
           >
             <option value="">Fornecedor</option>
-            {catalogos.fornecedores.map((fornecedor) => (
-              <option key={fornecedor.id} value={fornecedor.id}>
-                {fornecedor.nome}
+            {catalogos.fornecedores.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.nome}
               </option>
             ))}
           </select>
         )}
-
         {itemSelecionado && (
           <p className="movimento-resumo">
             Saldo atual: <strong>{itemSelecionado.saldoAtual}</strong> | Mínimo:{" "}
             <strong>{itemSelecionado.estoqueMinimo}</strong>
           </p>
         )}
-
         <div className="acoes-movimento">
           <button className="botao" type="submit" disabled={salvando}>
             {salvando ? "Registrando..." : "Registrar"}
@@ -201,41 +228,86 @@ function MovementsPage() {
       {erro && <p className="mensagem-erro">{erro}</p>}
       {mensagem && <p className="mensagem-sucesso">{mensagem}</p>}
 
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Item</th>
-              <th>Tipo</th>
-              <th>Quantidade</th>
-              <th>Saldo anterior</th>
-              <th>Saldo posterior</th>
-              <th>Fornecedor</th>
-              <th>Usuário</th>
-            </tr>
-          </thead>
-          <tbody>
-            {movimentacoes.length === 0 && (
-              <tr>
-                <td colSpan="8">Nenhuma movimentação registrada.</td>
-              </tr>
-            )}
-            {movimentacoes.map((mov) => (
-              <tr key={mov.id}>
-                <td>{formatarData(mov.criadoEm)}</td>
-                <td>{mov.item?.codigo}</td>
-                <td>{mov.tipo}</td>
-                <td>{mov.quantidade}</td>
-                <td>{mov.saldoAnterior}</td>
-                <td>{mov.saldoPosterior}</td>
-                <td>{mov.fornecedor?.nome || "-"}</td>
-                <td>{mov.usuario?.nome || "-"}</td>
-              </tr>
+      <section className="historico-bloco">
+        <h2>Histórico</h2>
+        <form className="filtros-historico" onSubmit={aplicarFiltros}>
+          <select name="itemId" value={filtros.itemId} onChange={alterarFiltro}>
+            <option value="">Todos os itens</option>
+            {catalogos.itens.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.codigo} — {item.descricao}
+              </option>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </select>
+          <select name="tipo" value={filtros.tipo} onChange={alterarFiltro}>
+            <option value="">Todos os tipos</option>
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+          <input
+            name="dataInicio"
+            type="date"
+            value={filtros.dataInicio}
+            onChange={alterarFiltro}
+          />
+          <input
+            name="dataFim"
+            type="date"
+            value={filtros.dataFim}
+            onChange={alterarFiltro}
+          />
+          <div className="acoes-filtro">
+            <button className="botao" type="submit">
+              Filtrar
+            </button>
+            <button
+              className="botao-secundario"
+              type="button"
+              onClick={limparFiltros}
+            >
+              Limpar
+            </button>
+          </div>
+        </form>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Item</th>
+                <th>Tipo</th>
+                <th>Quantidade</th>
+                <th>Saldo anterior</th>
+                <th>Saldo posterior</th>
+                <th>Fornecedor</th>
+                <th>Usuário</th>
+              </tr>
+            </thead>
+            <tbody>
+              {movimentacoes.length === 0 && (
+                <tr>
+                  <td colSpan="8">
+                    Nenhuma movimentação encontrada para os filtros informados.
+                  </td>
+                </tr>
+              )}
+              {movimentacoes.map((mov) => (
+                <tr key={mov.id}>
+                  <td>{formatarData(mov.criadoEm)}</td>
+                  <td>{mov.item?.codigo}</td>
+                  <td>{mov.tipo}</td>
+                  <td>{mov.quantidade}</td>
+                  <td>{mov.saldoAnterior}</td>
+                  <td>{mov.saldoPosterior}</td>
+                  <td>{mov.fornecedor?.nome || "-"}</td>
+                  <td>{mov.usuario?.nome || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
   );
 }

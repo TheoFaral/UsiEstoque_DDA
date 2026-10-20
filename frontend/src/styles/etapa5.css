@@ -1,4 +1,5 @@
-.acoes-movimento {
+.acoes-movimento,
+.acoes-filtro {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
@@ -26,8 +27,34 @@
   background: #1d2228;
 }
 
+.historico-bloco {
+  margin-top: 1.5rem;
+}
+
+.filtros-historico {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: end;
+}
+
+.filtros-historico .acoes-filtro {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .filtros-historico {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 700px) {
-  .acoes-movimento {
+  .acoes-movimento,
+  .acoes-filtro {
     flex-direction: column;
+  }
+  .filtros-historico {
+    grid-template-columns: 1fr;
   }
 }
