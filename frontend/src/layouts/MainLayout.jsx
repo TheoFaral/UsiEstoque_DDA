@@ -21,6 +21,7 @@ function MainLayout() {
           {usuario && <Link to="/itens">Itens</Link>}
           {usuario && <Link to="/movimentacoes">Movimentações</Link>}
           {usuario && <Link to="/painel">Painel</Link>}
+          {usuario && <Link to="/relatorios">Relatórios</Link>}
 
           {usuario ? (
             <button className="link-button" onClick={sair}>
