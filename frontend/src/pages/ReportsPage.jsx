@@ -5,10 +5,14 @@ import "../styles/etapa6.css";
 const filtrosIniciais = {
   dataInicio: "",
   dataFim: "",
+  itemId: "",
+  tipoPastilhaId: "",
 };
 
 function ReportsPage() {
   const [relatorio, setRelatorio] = useState(null);
+  const [itens, setItens] = useState([]);
+  const [tipos, setTipos] = useState([]);
   const [filtros, setFiltros] = useState(filtrosIniciais);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -16,20 +20,25 @@ function ReportsPage() {
   useEffect(() => {
     let ativo = true;
 
-    api
-      .get("/relatorios/resumo")
-      .then((response) => {
-        if (ativo) {
-          setRelatorio(response.data);
-        }
+    Promise.all([
+      api.get("/relatorios/resumo"),
+      api.get("/itens"),
+      api.get("/itens/catalogos"),
+    ])
+      .then(([respostaRelatorio, respostaItens, respostaCatalogos]) => {
+        if (!ativo) return;
+
+        setRelatorio(respostaRelatorio.data);
+        setItens(respostaItens.data || []);
+        setTipos(respostaCatalogos.data?.tipos || []);
       })
       .catch((error) => {
-        if (ativo) {
-          setErro(
-            error.response?.data?.error ||
-              "Não foi possível carregar os relatórios.",
-          );
-        }
+        if (!ativo) return;
+
+        setErro(
+          error.response?.data?.error ||
+            "Não foi possível carregar os relatórios.",
+        );
       })
       .finally(() => {
         if (ativo) {
@@ -93,6 +102,14 @@ function ReportsPage() {
       parametros.dataFim = filtros.dataFim;
     }
 
+    if (filtros.itemId) {
+      parametros.itemId = filtros.itemId;
+    }
+
+    if (filtros.tipoPastilhaId) {
+      parametros.tipoPastilhaId = filtros.tipoPastilhaId;
+    }
+
     await carregarRelatorio(parametros);
   }
 
@@ -151,6 +168,44 @@ function ReportsPage() {
             value={filtros.dataFim}
             onChange={alterarFiltro}
           />
+        </div>
+
+        <div className="campo-relatorio">
+          <label htmlFor="itemId">Item</label>
+
+          <select
+            id="itemId"
+            name="itemId"
+            value={filtros.itemId}
+            onChange={alterarFiltro}
+          >
+            <option value="">Todos os itens</option>
+
+            {itens.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.codigo} — {item.descricao}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="campo-relatorio">
+          <label htmlFor="tipoPastilhaId">Tipo de pastilha</label>
+
+          <select
+            id="tipoPastilhaId"
+            name="tipoPastilhaId"
+            value={filtros.tipoPastilhaId}
+            onChange={alterarFiltro}
+          >
+            <option value="">Todos os tipos</option>
+
+            {tipos.map((tipo) => (
+              <option key={tipo.id} value={tipo.id}>
+                {tipo.nome}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="relatorios-acoes">
@@ -259,6 +314,7 @@ function ReportsPage() {
               <tr>
                 <th>Código</th>
                 <th>Descrição</th>
+                <th>Tipo de pastilha</th>
                 <th>Quantidade de saída</th>
               </tr>
             </thead>
@@ -266,8 +322,8 @@ function ReportsPage() {
             <tbody>
               {consumoPorItem.length === 0 ? (
                 <tr>
-                  <td colSpan="3">
-                    Nenhuma saída encontrada no período informado.
+                  <td colSpan="4">
+                    Nenhuma saída encontrada para os filtros informados.
                   </td>
                 </tr>
               ) : (
@@ -275,6 +331,7 @@ function ReportsPage() {
                   <tr key={item.itemId}>
                     <td>{item.codigo}</td>
                     <td>{item.descricao}</td>
+                    <td>{item.tipoPastilha?.nome || "-"}</td>
                     <td>{item.quantidadeSaida}</td>
                   </tr>
                 ))
