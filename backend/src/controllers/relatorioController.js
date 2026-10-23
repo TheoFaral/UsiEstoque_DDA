@@ -5,6 +5,8 @@ async function resumo(req, res, next) {
     const resultado = await obterResumoRelatorios({
       dataInicio: req.query.dataInicio,
       dataFim: req.query.dataFim,
+      itemId: req.query.itemId,
+      tipoPastilhaId: req.query.tipoPastilhaId,
     });
 
     return res.json(resultado);
@@ -12,6 +14,7 @@ async function resumo(req, res, next) {
     if (error.statusCode === 400) {
       return res.status(400).json({ error: error.message });
     }
+
     return next(error);
   }
 }
