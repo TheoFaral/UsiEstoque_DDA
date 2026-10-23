@@ -9,6 +9,29 @@ const filtrosIniciais = {
   tipoPastilhaId: "",
 };
 
+function formatarTipoMovimentacao(tipo) {
+  const nomes = {
+    entrada: "Entrada",
+    saida: "Saída",
+    ajuste_entrada: "Ajuste de entrada",
+    ajuste_saida: "Ajuste de saída",
+  };
+
+  return nomes[tipo] || tipo || "-";
+}
+
+function formatarDataHora(valor) {
+  if (!valor) return "-";
+
+  const data = new Date(valor);
+
+  if (Number.isNaN(data.getTime())) {
+    return valor;
+  }
+
+  return data.toLocaleString("pt-BR");
+}
+
 function ReportsPage() {
   const [relatorio, setRelatorio] = useState(null);
   const [itens, setItens] = useState([]);
@@ -130,6 +153,7 @@ function ReportsPage() {
   const indicadores = relatorio?.indicadores || {};
   const estoqueAtual = relatorio?.estoqueAtual || [];
   const consumoPorItem = relatorio?.consumoPorItem || [];
+  const movimentacoesDetalhadas = relatorio?.movimentacoesDetalhadas || [];
   const itensParaReposicao = relatorio?.itensParaReposicao || [];
 
   return (
@@ -139,8 +163,8 @@ function ReportsPage() {
           <h1>Relatórios de estoque</h1>
 
           <p className="subtitulo">
-            Consulte o saldo atual, o consumo e os itens que precisam de
-            reposição.
+            Consulte o saldo atual, o consumo, as movimentações e os itens que
+            precisam de reposição.
           </p>
         </div>
       </div>
@@ -333,6 +357,68 @@ function ReportsPage() {
                     <td>{item.descricao}</td>
                     <td>{item.tipoPastilha?.nome || "-"}</td>
                     <td>{item.quantidadeSaida}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="relatorio-secao">
+        <h2>Movimentações detalhadas</h2>
+
+        <div className="table-wrap table-wrap-detalhado">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/hora</th>
+                <th>Item</th>
+                <th>Tipo de pastilha</th>
+                <th>Movimentação</th>
+                <th>Quantidade</th>
+                <th>Saldo anterior</th>
+                <th>Saldo posterior</th>
+                <th>Usuário</th>
+                <th>Fornecedor / justificativa</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {movimentacoesDetalhadas.length === 0 ? (
+                <tr>
+                  <td colSpan="9">
+                    Nenhuma movimentação encontrada para os filtros informados.
+                  </td>
+                </tr>
+              ) : (
+                movimentacoesDetalhadas.map((movimentacao) => (
+                  <tr key={movimentacao.id}>
+                    <td>{formatarDataHora(movimentacao.criadoEm)}</td>
+
+                    <td>
+                      {movimentacao.item
+                        ? `${movimentacao.item.codigo} — ${movimentacao.item.descricao}`
+                        : "-"}
+                    </td>
+
+                    <td>{movimentacao.item?.tipo?.nome || "-"}</td>
+
+                    <td>{formatarTipoMovimentacao(movimentacao.tipo)}</td>
+
+                    <td>{movimentacao.quantidade}</td>
+
+                    <td>{movimentacao.saldoAnterior}</td>
+
+                    <td>{movimentacao.saldoPosterior}</td>
+
+                    <td>{movimentacao.usuario?.nome || "-"}</td>
+
+                    <td>
+                      {movimentacao.fornecedor?.nome ||
+                        movimentacao.justificativa ||
+                        "-"}
+                    </td>
                   </tr>
                 ))
               )}

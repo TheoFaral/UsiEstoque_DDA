@@ -88,13 +88,31 @@
   margin-bottom: 0;
 }
 
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-wrap table {
+  width: 100%;
+  min-width: 680px;
+}
+
+.table-wrap-detalhado table {
+  min-width: 1180px;
+}
+
+.mensagem-erro {
+  margin: 0;
+}
+
 @media (max-width: 900px) {
   .relatorios-indicadores {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .relatorios-filtros {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .relatorios-acoes {
