@@ -125,7 +125,7 @@ function ItemsPage() {
         Usuário: {usuario?.nome} ({usuario?.perfil})
       </p>
       <form
-        className="form-grid"
+        className="form-grid filtros-itens"
         onSubmit={(e) => {
           e.preventDefault();
           carregar(filtros);

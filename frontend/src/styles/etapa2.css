@@ -127,3 +127,44 @@ th {
     flex-direction: column;
   }
 }
+/* Etapa 9 — Organização visual dos filtros de itens */
+
+.filtros-itens {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+  row-gap: 1.25rem;
+}
+
+.filtros-itens > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.filtros-itens > label input,
+.filtros-itens > label select {
+  width: 100%;
+  min-width: 0;
+}
+
+.filtros-itens > div {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filtros-itens > div .botao {
+  margin-top: 0;
+}
+
+.filtros-itens > div .secundario {
+  margin-left: 0;
+}
+
+@media (max-width: 700px) {
+  .filtros-itens {
+    grid-template-columns: 1fr;
+  }
+}
