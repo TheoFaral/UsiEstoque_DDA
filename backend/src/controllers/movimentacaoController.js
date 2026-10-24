@@ -46,6 +46,7 @@ async function catalogos(_req, res, next) {
         order: [["nome", "ASC"]],
       }),
     ]);
+
     return res.json({ itens, fornecedores });
   } catch (error) {
     return next(error);
@@ -60,54 +61,89 @@ async function registrar(req, res, next) {
     const fornecedorId = req.body?.fornecedorId
       ? Number(req.body.fornecedorId)
       : null;
+    const justificativa = String(req.body?.justificativa || "").trim();
     const chaveRequisicao = String(req.body?.chaveRequisicao || randomUUID());
 
-    if (!itemId || !["entrada", "saida"].includes(tipo)) {
-      return res
-        .status(400)
-        .json({ error: "Item e tipo de movimentação são obrigatórios." });
+    const tipos = ["entrada", "saida", "ajuste_entrada", "ajuste_saida"];
+
+    const ajuste = tipo.startsWith("ajuste_");
+
+    if (!Number.isInteger(itemId) || itemId <= 0 || !tipos.includes(tipo)) {
+      return res.status(400).json({
+        error: "Item e tipo de movimentação válidos são obrigatórios.",
+      });
     }
+
     if (!Number.isInteger(quantidade) || quantidade <= 0) {
-      return res
-        .status(400)
-        .json({
-          error: "A quantidade deve ser um número inteiro maior que zero.",
-        });
+      return res.status(400).json({
+        error: "A quantidade deve ser um número inteiro maior que zero.",
+      });
     }
-    if (tipo === "entrada" && !fornecedorId) {
-      return res.status(400).json({ error: "A entrada exige um fornecedor." });
+
+    if (ajuste && req.usuario?.perfil !== "administrador") {
+      return res.status(403).json({
+        error: "Apenas o Administrador pode registrar ajustes.",
+      });
     }
-    if (tipo === "saida" && fornecedorId) {
-      return res
-        .status(400)
-        .json({ error: "Fornecedor não deve ser informado em saídas." });
+
+    if (ajuste && !justificativa) {
+      return res.status(400).json({
+        error: "A justificativa é obrigatória para ajustes.",
+      });
+    }
+
+    if (justificativa.length > 500) {
+      return res.status(400).json({
+        error: "A justificativa deve ter no máximo 500 caracteres.",
+      });
+    }
+
+    if (
+      tipo === "entrada" &&
+      (!Number.isInteger(fornecedorId) || fornecedorId <= 0)
+    ) {
+      return res.status(400).json({
+        error: "A entrada exige um fornecedor.",
+      });
+    }
+
+    if (tipo !== "entrada" && fornecedorId) {
+      return res.status(400).json({
+        error: "Fornecedor somente deve ser informado em entradas.",
+      });
     }
 
     const movimentacao = await registrarMovimentacao({
       itemId,
       tipo,
       quantidade,
-      fornecedorId,
+      fornecedorId: tipo === "entrada" ? fornecedorId : null,
       usuarioId: req.usuario.id,
+      justificativa: ajuste ? justificativa : null,
       chaveRequisicao,
     });
 
     return res.status(201).json(movimentacao);
   } catch (error) {
     const mensagem = mensagemBanco(error);
+
     if (mensagem.includes("Quantidade superior ao saldo disponivel")) {
-      return res
-        .status(409)
-        .json({ error: "Quantidade superior ao saldo disponível." });
+      return res.status(409).json({
+        error: "Quantidade superior ao saldo disponível.",
+      });
     }
+
     if (
       mensagem.includes("inexistente ou inativo") ||
-      mensagem.includes("A entrada exige um fornecedor") ||
-      mensagem.includes("Fornecedor somente pode ser informado") ||
-      mensagem.includes("quantidade deve ser maior que zero")
+      mensagem.includes("exige um fornecedor") ||
+      mensagem.includes("Fornecedor somente") ||
+      mensagem.includes("quantidade deve ser maior que zero") ||
+      mensagem.toLowerCase().includes("justificativa") ||
+      mensagem.toLowerCase().includes("administrador")
     ) {
       return res.status(400).json({ error: mensagem });
     }
+
     return next(error);
   }
 }
