@@ -23,6 +23,14 @@ function MainLayout() {
           {usuario && <Link to="/painel">Painel</Link>}
           {usuario && <Link to="/relatorios">Relatórios</Link>}
 
+          {usuario?.perfil === "administrador" && (
+            <Link to="/usuarios">Usuários</Link>
+          )}
+
+          {usuario?.perfil === "administrador" && (
+            <Link to="/cadastros">Cadastros</Link>
+          )}
+
           {usuario ? (
             <button className="link-button" onClick={sair}>
               Sair
