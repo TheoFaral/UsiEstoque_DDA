@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/api.js";
+import { useAuth } from "../auth/useAuth.js";
 
 const formInicial = {
   tipo: "entrada",
   itemId: "",
   quantidade: 1,
   fornecedorId: "",
+  justificativa: "",
 };
 const filtrosIniciais = { itemId: "", tipo: "", dataInicio: "", dataFim: "" };
-
 function formatarData(valor) {
-  if (!valor) return "-";
-  return new Date(valor).toLocaleString("pt-BR");
+  return valor ? new Date(valor).toLocaleString("pt-BR") : "-";
 }
 
 function MovementsPage() {
+  const { usuario } = useAuth();
+  const admin = usuario?.perfil === "administrador";
   const [catalogos, setCatalogos] = useState({ itens: [], fornecedores: [] });
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [form, setForm] = useState(formInicial);
@@ -23,6 +25,8 @@ function MovementsPage() {
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const ajuste = form.tipo === "ajuste_entrada" || form.tipo === "ajuste_saida";
+  const entradaComum = form.tipo === "entrada";
 
   async function carregarHistorico(filtrosAtuais = filtrosIniciais) {
     const params = Object.fromEntries(
@@ -33,18 +37,17 @@ function MovementsPage() {
     const { data } = await api.get("/movimentacoes", { params });
     setMovimentacoes(data);
   }
-
   useEffect(() => {
     let ativo = true;
     async function carregarInicial() {
       try {
-        const [catalogosResp, movimentosResp] = await Promise.all([
+        const [a, b] = await Promise.all([
           api.get("/movimentacoes/catalogos"),
           api.get("/movimentacoes"),
         ]);
         if (ativo) {
-          setCatalogos(catalogosResp.data);
-          setMovimentacoes(movimentosResp.data);
+          setCatalogos(a.data);
+          setMovimentacoes(b.data);
         }
       } catch (error) {
         if (ativo)
@@ -59,48 +62,42 @@ function MovementsPage() {
       ativo = false;
     };
   }, []);
-
   const itensFiltrados = useMemo(() => {
     const termo = buscaItem.trim().toLowerCase();
-    if (!termo) return catalogos.itens;
-    return catalogos.itens.filter(
-      (item) =>
-        item.codigo.toLowerCase().includes(termo) ||
-        item.descricao.toLowerCase().includes(termo),
-    );
+    return !termo
+      ? catalogos.itens
+      : catalogos.itens.filter(
+          (item) =>
+            item.codigo.toLowerCase().includes(termo) ||
+            item.descricao.toLowerCase().includes(termo),
+        );
   }, [buscaItem, catalogos.itens]);
-
   const itemSelecionado = catalogos.itens.find(
     (item) => item.id === Number(form.itemId),
   );
-
   async function recarregar() {
-    const catalogosResp = await api.get("/movimentacoes/catalogos");
-    setCatalogos(catalogosResp.data);
+    const resposta = await api.get("/movimentacoes/catalogos");
+    setCatalogos(resposta.data);
     await carregarHistorico(filtros);
   }
-
   function alterar(event) {
     const { name, value } = event.target;
     setForm((atual) => ({
       ...atual,
       [name]: value,
-      ...(name === "tipo" && value === "saida" ? { fornecedorId: "" } : {}),
+      ...(name === "tipo" ? { fornecedorId: "", justificativa: "" } : {}),
     }));
   }
-
   function alterarFiltro(event) {
     const { name, value } = event.target;
     setFiltros((atual) => ({ ...atual, [name]: value }));
   }
-
   function cancelar() {
     setForm(formInicial);
     setBuscaItem("");
     setErro("");
     setMensagem("");
   }
-
   async function aplicarFiltros(event) {
     event.preventDefault();
     setErro("");
@@ -112,7 +109,6 @@ function MovementsPage() {
       );
     }
   }
-
   async function limparFiltros() {
     setFiltros(filtrosIniciais);
     setErro("");
@@ -124,7 +120,6 @@ function MovementsPage() {
       );
     }
   }
-
   async function registrar(event) {
     event.preventDefault();
     setErro("");
@@ -135,8 +130,8 @@ function MovementsPage() {
         itemId: Number(form.itemId),
         tipo: form.tipo,
         quantidade: Number(form.quantidade),
-        fornecedorId:
-          form.tipo === "entrada" ? Number(form.fornecedorId) : null,
+        fornecedorId: entradaComum ? Number(form.fornecedorId) : null,
+        justificativa: ajuste ? form.justificativa.trim() : null,
         chaveRequisicao: crypto.randomUUID(),
       });
       setMensagem("Movimentação registrada com sucesso.");
@@ -152,19 +147,19 @@ function MovementsPage() {
       setSalvando(false);
     }
   }
-
   return (
     <section>
       <h1>Movimentações de estoque</h1>
       <p className="subtitulo">
         Registre entradas e saídas e acompanhe o histórico.
       </p>
-
       <form className="form-grid" onSubmit={registrar}>
         <h2>Nova movimentação</h2>
         <select name="tipo" value={form.tipo} onChange={alterar}>
           <option value="entrada">Entrada</option>
           <option value="saida">Saída</option>
+          {admin && <option value="ajuste_entrada">Ajuste de entrada</option>}
+          {admin && <option value="ajuste_saida">Ajuste de saída</option>}
         </select>
         <input
           type="search"
@@ -189,7 +184,7 @@ function MovementsPage() {
           onChange={alterar}
           required
         />
-        {form.tipo === "entrada" && (
+        {entradaComum && (
           <select
             name="fornecedorId"
             value={form.fornecedorId}
@@ -203,6 +198,28 @@ function MovementsPage() {
               </option>
             ))}
           </select>
+        )}
+        {ajuste && admin && (
+          <label
+            style={{ gridColumn: "1 / -1", display: "grid", gap: "0.4rem" }}
+          >
+            Justificativa obrigatória para ajuste
+            <textarea
+              name="justificativa"
+              value={form.justificativa}
+              onChange={alterar}
+              required
+              maxLength={500}
+              rows={3}
+              style={{
+                padding: "0.75rem",
+                background: "#111",
+                color: "#fff",
+                border: "1px solid #555",
+                borderRadius: "6px",
+              }}
+            />
+          </label>
         )}
         {itemSelecionado && (
           <p className="movimento-resumo">
@@ -224,10 +241,8 @@ function MovementsPage() {
           </button>
         </div>
       </form>
-
       {erro && <p className="mensagem-erro">{erro}</p>}
       {mensagem && <p className="mensagem-sucesso">{mensagem}</p>}
-
       <section className="historico-bloco">
         <h2>Histórico</h2>
         <form className="filtros-historico" onSubmit={aplicarFiltros}>
@@ -243,6 +258,8 @@ function MovementsPage() {
             <option value="">Todos os tipos</option>
             <option value="entrada">Entrada</option>
             <option value="saida">Saída</option>
+            <option value="ajuste_entrada">Ajuste de entrada</option>
+            <option value="ajuste_saida">Ajuste de saída</option>
           </select>
           <input
             name="dataInicio"
@@ -269,7 +286,6 @@ function MovementsPage() {
             </button>
           </div>
         </form>
-
         <div className="table-wrap">
           <table>
             <thead>
@@ -282,12 +298,13 @@ function MovementsPage() {
                 <th>Saldo posterior</th>
                 <th>Fornecedor</th>
                 <th>Usuário</th>
+                <th>Justificativa</th>
               </tr>
             </thead>
             <tbody>
               {movimentacoes.length === 0 && (
                 <tr>
-                  <td colSpan="8">
+                  <td colSpan="9">
                     Nenhuma movimentação encontrada para os filtros informados.
                   </td>
                 </tr>
@@ -302,6 +319,7 @@ function MovementsPage() {
                   <td>{mov.saldoPosterior}</td>
                   <td>{mov.fornecedor?.nome || "-"}</td>
                   <td>{mov.usuario?.nome || "-"}</td>
+                  <td>{mov.justificativa || "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -311,5 +329,4 @@ function MovementsPage() {
     </section>
   );
 }
-
 export default MovementsPage;
