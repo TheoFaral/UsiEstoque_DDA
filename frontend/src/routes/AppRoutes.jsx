@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useAuth } from "../auth/useAuth.js";
 import MainLayout from "../layouts/MainLayout.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import ItemsPage from "../pages/ItemsPage.jsx";
@@ -12,11 +13,19 @@ import NotFoundPage from "../pages/NotFoundPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 
 function AppRoutes() {
+  const { usuario } = useAuth();
+
   return (
     <Routes>
       <Route element={<MainLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/"
+          element={usuario ? <Navigate to="/itens" replace /> : <HomePage />}
+        />
+        <Route
+          path="/login"
+          element={usuario ? <Navigate to="/itens" replace /> : <LoginPage />}
+        />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/itens" element={<ItemsPage />} />
