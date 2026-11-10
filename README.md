@@ -1,48 +1,43 @@
 # UsiEstoque DDA
 
-Sistema web desenvolvido como parte do Projeto Aplicado IV do curso de Análise e Desenvolvimento de Sistemas do Centro Universitário SENAI Santa Catarina, a partir de uma demanda da DDA Usinagem Industrial Ltda.
+O UsiEstoque DDA é um sistema web para controle de estoque de pastilhas industriais utilizadas em processos de usinagem. O projeto foi desenvolvido no Projeto Aplicado IV do curso de Análise e Desenvolvimento de Sistemas do Centro Universitário SENAI Santa Catarina, a partir de uma demanda da DDA Usinagem Industrial Ltda.
 
-O projeto tem como objetivo melhorar o controle de estoque de pastilhas industriais utilizadas nos processos de usinagem, substituindo registros em planilhas por uma aplicação que centraliza cadastros, movimentações, saldos e informações para acompanhamento e reposição dos materiais.
+A aplicação reúne cadastros, movimentações, consulta de saldos, acompanhamento de estoque mínimo e relatórios em um único ambiente.
 
 ## Funcionalidades
 
-O sistema possui dois perfis de acesso: Administrador e Operador de Estoque.
-
-O Administrador pode gerenciar usuários, itens, tipos de pastilha, fabricantes, fornecedores e locais de armazenamento. Também pode registrar entradas, saídas e ajustes de estoque, sendo obrigatória a justificativa para os ajustes.
-
-O Operador pode consultar itens, registrar entradas e saídas, acompanhar o histórico de movimentações e acessar o painel e os relatórios. Não possui permissão para administrar cadastros ou registrar ajustes de estoque.
-
-As principais funcionalidades incluem:
-
-- Cadastro, edição e inativação de itens e cadastros auxiliares.
-- Busca de itens por código ou descrição e utilização de filtros combináveis.
+- Cadastro, edição, consulta e inativação de itens.
+- Manutenção de tipos de pastilha, fabricantes, fornecedores e locais de armazenamento.
+- Busca de itens por código ou descrição e filtros por tipo, fabricante, local e situação.
 - Registro de entradas com identificação do fornecedor.
-- Registro de saídas com validação do saldo disponível.
-- Ajustes administrativos de entrada e saída, com justificativa.
-- Histórico de movimentações com filtros por item, tipo e período.
-- Definição de estoque mínimo individual por item.
-- Identificação de itens com estoque crítico ou sem estoque.
-- Painel com indicadores e as dez movimentações mais recentes.
-- Relatórios de saldo atual, consumo, movimentações detalhadas e necessidade de reposição.
+- Registro de saídas com verificação do saldo disponível.
+- Ajustes de entrada e saída, restritos ao Administrador e com justificativa obrigatória.
+- Consulta do histórico de movimentações, com filtros por item, tipo e período.
+- Estoque mínimo por item e identificação de materiais em situação crítica.
+- Painel com indicadores e movimentações recentes.
+- Relatórios de saldos, consumo, movimentações detalhadas e necessidade de reposição.
 
-O registro das movimentações utiliza uma procedure no MySQL, responsável pelas validações e pela atualização do saldo e do histórico na mesma transação.
+O sistema utiliza dois perfis de acesso:
 
-## Tecnologias utilizadas
+- **Administrador:** gerencia usuários, itens e cadastros auxiliares; registra movimentações e ajustes; consulta painel e relatórios.
+- **Operador:** consulta itens, registra entradas e saídas e acessa histórico, painel e relatórios. Não administra cadastros nem executa ajustes.
 
-O projeto utiliza as seguintes tecnologias:
+A autenticação é realizada por JWT. O frontend verifica a validade da sessão, trata respostas de não autorização e redireciona para o login quando a sessão expira. As páginas internas exigem autenticação.
 
-- Frontend: React, Vite, JavaScript, React Router e Axios.
-- Backend: Node.js, Express e JavaScript.
-- Banco de dados: MySQL, Sequelize e mysql2.
-- Autenticação: JWT e bcryptjs.
-- Testes: Jest e Supertest.
-- Versionamento: Git e GitHub.
+## Tecnologias e organização
 
-A aplicação segue uma arquitetura cliente-servidor, com comunicação entre o frontend e a API REST. O backend organiza suas responsabilidades em rotas, controllers, services, models e middlewares.
+- **Frontend:** React, Vite, React Router e Axios.
+- **Backend:** Node.js, Express e API REST.
+- **Banco de dados:** MySQL, com acesso pelo Sequelize e pelo driver mysql2.
+- **Autenticação:** JWT e bcryptjs.
+- **Testes:** Jest e Supertest no backend; ESLint e build Vite no frontend.
+- **Versionamento:** Git e GitHub.
 
-## Organização do projeto
+O fluxo principal da aplicação é: interface React, requisições Axios, API Express, regras de negócio e banco MySQL. As movimentações são processadas pela procedure `sp_registrar_movimentacao`, responsável pelas validações e pela atualização do saldo e do histórico na mesma transação.
 
-A estrutura principal está organizada da seguinte forma:
+## Estrutura do repositório
+
+A árvore abaixo apresenta os diretórios e arquivos principais, sem listar todos os arquivos internos.
 
 ```text
 UsiEstoque_DDA/
@@ -55,35 +50,42 @@ UsiEstoque_DDA/
 │   │   ├── models/
 │   │   ├── routes/
 │   │   └── services/
-│   └── tests/
+│   ├── tests/
+│   ├── .env.example
+│   └── package.json
 ├── database/
-│   ├── diagrams/
 │   ├── scripts/
-│   └── usiestoque_V2.sql
+│   │   └── README.md
+│   ├── usiestoque_V2.sql
+│   └── README.md
 ├── docs/
+│   └── decisoes/
 ├── frontend/
-│   └── src/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── auth/
+│   │   ├── components/
+│   │   ├── layouts/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   └── styles/
+│   ├── .env.example
+│   └── package.json
+├── package.json
 └── README.md
 ```
 
+As orientações específicas do banco estão em [`database/README.md`](database/README.md). A pasta [`database/scripts`](database/scripts) é reservada para scripts complementares. As decisões técnicas ficam em `docs/decisoes`.
+
 ## Requisitos para execução local
 
-Para executar o projeto localmente, são necessários:
-
-- Node.js 24, conforme a configuração dos arquivos `package.json`.
-- npm compatível com a versão instalada do Node.js.
+- Node.js 24 e npm compatível.
 - MySQL 8.0.16 ou superior.
-- Git, para obter e atualizar o repositório.
+- Git para obter e atualizar o projeto.
 
-O sistema foi desenvolvido e validado em ambientes macOS e Windows.
+O projeto foi executado em ambientes macOS e Windows.
 
-## Obter o projeto
-
-O repositório principal está disponível em:
-
-https://github.com/TheoFaral/UsiEstoque_DDA
-
-Para clonar o projeto:
+## Obter o código
 
 ```bash
 git clone https://github.com/TheoFaral/UsiEstoque_DDA.git
@@ -91,190 +93,110 @@ cd UsiEstoque_DDA
 git switch develop
 ```
 
-A branch `develop` reúne as funcionalidades integradas durante o desenvolvimento. A branch `main` é destinada às versões estáveis do projeto.
+A branch `develop` reúne as funcionalidades integradas durante o desenvolvimento. A branch `main` é reservada para a linha estável.
 
 ## Instalar as dependências
 
-Na raiz do projeto, execute:
+Na raiz do repositório, execute:
 
 ```bash
 npm --prefix backend install
 npm --prefix frontend install
 ```
 
-Esses comandos instalam as dependências utilizadas pelo backend e pelo frontend.
-
 ## Preparar o banco de dados
 
-O banco oficial do projeto está definido no arquivo `database/usiestoque_V2.sql`.
+O esquema oficial está em `database/usiestoque_V2.sql`. Ele cria o banco `usiestoque_dda`, sete tabelas, índices, quatro views, uma procedure e duas triggers de proteção do histórico.
 
-Antes de iniciar a aplicação, o servidor MySQL deve estar instalado e em funcionamento.
+Para uma instalação nova:
 
-O script cria o banco `usiestoque_dda`, as tabelas, os relacionamentos, os índices, as views, a procedure de movimentações e as triggers de proteção do histórico.
+1. Inicie o servidor MySQL e abra uma conexão no MySQL Workbench.
+2. Abra `database/usiestoque_V2.sql`.
+3. Execute o arquivo completo.
+4. Confirme a criação do banco e dos objetos esperados.
 
-Para importar o banco pelo MySQL Workbench:
+**Atenção:** o script é destinado à preparação inicial do esquema. Não o execute novamente sobre um banco com dados sem backup e avaliação prévia. Consulte os detalhes em [`database/README.md`](database/README.md).
 
-1. Abra o MySQL Workbench e conecte-se ao servidor MySQL local.
-2. Abra o arquivo `database/usiestoque_V2.sql`.
-3. Execute o script completo.
-4. Confira a criação do banco `usiestoque_dda` e das sete tabelas principais.
+## Configurar o backend
 
-A importação deve ser realizada em uma instalação nova ou em um ambiente de desenvolvimento preparado para essa finalidade. Não execute novamente o script sobre um banco que já contenha dados sem avaliar previamente seus efeitos.
+Crie `backend/.env` a partir de `backend/.env.example` e ajuste os parâmetros locais:
 
-As instruções específicas do banco também estão disponíveis em `database/README.md`.
+- `NODE_ENV` e `PORT`: ambiente e porta da API.
+- `FRONTEND_URL`: origem autorizada do frontend.
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` e `DB_PASSWORD`: conexão MySQL.
+- `JWT_SECRET` e `JWT_EXPIRES_IN`: assinatura e validade dos tokens.
+- `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD`: cadastro do Administrador inicial, quando necessário.
 
-## Configurar as variáveis de ambiente
+Use uma chave JWT própria para cada ambiente. O arquivo `.env` não deve ser versionado, pois pode conter credenciais.
 
-O backend utiliza variáveis de ambiente para configurar a conexão com o banco, a autenticação e a porta da API.
+O frontend utiliza `frontend/.env.example` como referência. Quando necessário, crie `frontend/.env` e configure `VITE_API_URL`. No ambiente local, o endereço previsto é `http://localhost:3000/api`.
 
-Na pasta `backend`, faça uma cópia do arquivo `.env.example` com o nome `.env`.
+## Verificar o banco e criar o Administrador inicial
 
-Configure os campos de acordo com o ambiente local.
-
-As variáveis utilizadas são:
-
-`NODE_ENV`: identifica o ambiente de execução.
-
-`PORT`: define a porta utilizada pela API.
-
-`FRONTEND_URL`: informa o endereço do frontend autorizado a acessar a API.
-
-`DB_HOST`: informa o endereço do servidor MySQL.
-
-`DB_PORT`: define a porta utilizada pelo MySQL.
-
-`DB_NAME`: informa o nome do banco de dados.
-
-`DB_USER`: identifica o usuário utilizado na conexão com o banco.
-
-`DB_PASSWORD`: informa a senha desse usuário.
-
-`JWT_SECRET`: contém a chave utilizada para assinar os tokens de autenticação.
-
-`JWT_EXPIRES_IN`: define o tempo de expiração dos tokens.
-
-`SEED_ADMIN_NAME`: define o nome do Administrador inicial.
-
-`SEED_ADMIN_EMAIL`: define o e-mail do Administrador inicial.
-
-`SEED_ADMIN_PASSWORD`: define a senha do Administrador inicial.
-
-A variável `JWT_SECRET` deve receber uma chave própria e segura para o ambiente utilizado.
-
-O arquivo `.env` contém informações locais e não deve ser publicado no repositório.
-
-O frontend utiliza o arquivo `frontend/.env.example` como referência para a variável `VITE_API_URL`, cujo endereço local padrão é `http://localhost:3000/api`.
-
-## Verificar a conexão com o banco
-
-Com o MySQL em funcionamento e o backend configurado, execute na raiz do projeto:
+Com o MySQL configurado, execute:
 
 ```bash
 npm --prefix backend run db:check
 ```
 
-Quando a conexão e as tabelas esperadas estiverem disponíveis, o script deverá apresentar:
+Em caso de sucesso, a saída esperada é:
 
 ```text
 Conexão MySQL OK. Esquema usiestoque_V2 validado.
 ```
 
-Essa verificação confirma a conexão e a presença das tabelas principais, mas não substitui a validação funcional das operações do sistema.
+Esse comando verifica a conexão e a presença das sete tabelas principais. Ele não executa todos os cenários funcionais do sistema.
 
-## Criar o Administrador inicial
-
-Em uma instalação nova, configure as variáveis `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD` no arquivo `backend/.env`.
-
-Depois execute:
+Em uma instalação nova, configure antes as variáveis `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD`, depois execute:
 
 ```bash
 npm --prefix backend run seed:admin
 ```
 
-O script cria o Administrador caso não exista um usuário com o e-mail configurado.
+O script cria o Administrador se ainda não existir uma conta com o e-mail informado. Se a conta já existir, a senha não será substituída automaticamente.
 
-Se o usuário já existir, o script informa sua existência e não substitui automaticamente sua senha.
-
-O cadastro inicial não precisa ser repetido quando o banco já possui um Administrador válido.
-
-## Dados para demonstração
-
-O backend também possui o comando:
+Para dados básicos de desenvolvimento, há também o comando opcional:
 
 ```bash
 npm --prefix backend run seed:dev
 ```
 
-Esse script cadastra dados básicos de desenvolvimento, utilizando verificações para evitar a recriação de determinados registros já existentes.
+Esse comando utiliza registros de exemplo definidos no backend. Verifique os dados existentes antes de executá-lo e não o utilize indiscriminadamente em ambientes com informações reais.
 
-Seu uso é opcional e deve ocorrer apenas em ambientes preparados para desenvolvimento ou demonstração, após conferir os dados existentes.
+## Iniciar a aplicação
 
-## Executar o sistema
+Abra dois terminais na raiz do projeto.
 
-Após configurar o banco e instalar as dependências, abra dois terminais na raiz do projeto.
-
-No primeiro terminal, inicie o backend:
+No primeiro:
 
 ```bash
 npm run dev:backend
 ```
 
-A API estará disponível, por padrão, em:
+A API utiliza, por padrão, a porta `3000`. A rota de verificação é `http://localhost:3000/api/health`.
 
-`http://localhost:3000`
-
-Para verificar o funcionamento básico da API, acesse:
-
-`http://localhost:3000/api/health`
-
-No segundo terminal, inicie o frontend:
+No segundo:
 
 ```bash
 npm run dev:frontend
 ```
 
-A interface estará disponível, por padrão, em:
+A interface utiliza, por padrão, `http://localhost:5173`. Os dois processos devem permanecer ativos durante o uso local.
 
-`http://localhost:5173`
+## Testes e verificações
 
-Os dois processos devem permanecer em execução durante a utilização do sistema.
-
-## Executar as verificações automatizadas
-
-Os testes existentes do backend são executados com:
+Na raiz do repositório:
 
 ```bash
 npm --prefix backend test
-```
-
-Para verificar a qualidade estática do frontend:
-
-```bash
 npm --prefix frontend run lint
-```
-
-Para gerar o build do frontend:
-
-```bash
 npm --prefix frontend run build
 ```
 
-Na última regressão documentada pela equipe, realizada sobre a branch `develop` no commit `0eace58`, foram aprovados 24 testes Jest distribuídos em cinco suítes. A execução do ESLint e a geração do build também foram concluídas sem erros.
+O primeiro comando executa os testes Jest do backend. Os demais verificam o código e geram o build do frontend. A aprovação desses comandos não substitui a conferência das funcionalidades no ambiente utilizado.
 
-Esses resultados correspondem à versão verificada em outubro de 2026 e não substituem novas verificações após alterações no código.
+## Controle de versões
 
-## Controle de versão
+O trabalho é integrado na branch `develop`, por meio de branches específicas e Pull Requests. Antes de iniciar uma alteração, atualize a cópia local do repositório e confira o estado da árvore de trabalho.
 
-O desenvolvimento utiliza Git e GitHub, com a branch `develop` destinada à integração das funcionalidades e a `main` destinada às versões estáveis.
-
-As atividades foram desenvolvidas em branches específicas e integradas por meio de pull requests.
-
-Os commits e pull requests permitem acompanhar as contribuições de Luiz e Theo durante as etapas do projeto.
-
-## Repositório
-
-Repositório principal:
-
-https://github.com/TheoFaral/UsiEstoque_DDA
-
-O código-fonte, o histórico de desenvolvimento e os testes automatizados estão disponíveis no repositório.
+Repositório principal: https://github.com/TheoFaral/UsiEstoque_DDA
