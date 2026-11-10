@@ -45,7 +45,9 @@ function MainLayout() {
         <Outlet />
       </main>
 
-      <footer className="rodape">Projeto Aplicado IV</footer>
+      <footer className="rodape">
+        UsiEstoque DDA — Gestão de estoque de pastilhas para usinagem
+      </footer>
     </div>
   );
 }
