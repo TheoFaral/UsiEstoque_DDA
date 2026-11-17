@@ -1,0 +1,55 @@
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/useAuth.js";
+
+function MainLayout() {
+  const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function sair() {
+    logout();
+    navigate("/");
+  }
+
+  return (
+    <div className="app-shell">
+      <header className="topo">
+        <Link className="brand" to="/">
+          UsiEstoque DDA
+        </Link>
+
+        <nav className="nav-actions">
+          {usuario && <Link to="/itens">Itens</Link>}
+          {usuario && <Link to="/movimentacoes">Movimentações</Link>}
+          {usuario && <Link to="/painel">Painel</Link>}
+          {usuario && <Link to="/relatorios">Relatórios</Link>}
+
+          {usuario?.perfil === "administrador" && (
+            <Link to="/usuarios">Usuários</Link>
+          )}
+
+          {usuario?.perfil === "administrador" && (
+            <Link to="/cadastros">Cadastros</Link>
+          )}
+
+          {usuario ? (
+            <button className="link-button" onClick={sair}>
+              Sair
+            </button>
+          ) : (
+            <Link to="/login">Entrar</Link>
+          )}
+        </nav>
+      </header>
+
+      <main className="conteudo">
+        <Outlet />
+      </main>
+
+      <footer className="rodape">
+        UsiEstoque DDA — Gestão de estoque de pastilhas para usinagem
+      </footer>
+    </div>
+  );
+}
+
+export default MainLayout;

@@ -1,0 +1,16 @@
+{
+  "name": "usiestoque-dda",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistema web responsivo para controle de estoque de pastilhas industriais",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "start:backend": "npm --prefix backend start",
+    "test:backend": "npm --prefix backend test",
+    "lint:frontend": "npm --prefix frontend run lint"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  }
+}

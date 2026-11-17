@@ -1,0 +1,14 @@
+.mensagem-sucesso {
+  color: #89e6ad;
+  background: #163a23;
+  border: 1px solid #2f6b43;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+@media (max-width: 700px) {
+  .nav-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
